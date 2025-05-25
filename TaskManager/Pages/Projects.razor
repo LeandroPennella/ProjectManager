@@ -1,0 +1,72 @@
+@page "/projects/{FolderId:int}"
+@using TaskManager.Data.Models
+@inject TaskManager.Data.TaskManagerDbContext Db
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter]
+    public int FolderId { get; set; }
+    private Folder folder;
+    private List<Project> projects = new();
+    private string newProjectName = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        folder = Db.Folders.FirstOrDefault(f => f.Id == FolderId);
+        if (folder != null)
+        {
+            projects = Db.Projects.Where(p => p.FolderId == FolderId).ToList();
+        }
+    }
+
+    private void AddProject()
+    {
+        if (!string.IsNullOrWhiteSpace(newProjectName))
+        {
+            var project = new Project { Name = newProjectName, FolderId = FolderId };
+            Db.Projects.Add(project);
+            Db.SaveChanges();
+            projects.Add(project);
+            newProjectName = string.Empty;
+        }
+    }
+
+    private void DeleteProject(int id)
+    {
+        var project = Db.Projects.Find(id);
+        if (project != null)
+        {
+            Db.Projects.Remove(project);
+            Db.SaveChanges();
+            projects.Remove(project);
+        }
+    }
+}
+
+<h3>Proyectos en Carpeta: @folder?.Name</h3>
+
+<div class="mb-3">
+    <input @bind="newProjectName" placeholder="Nuevo Proyecto" class="form-control" />
+    <button class="btn btn-primary mt-2" @onclick="AddProject">Agregar Proyecto</button>
+</div>
+
+@if (projects is null)
+{
+    <p>Cargando...</p>
+}
+else if (!projects.Any())
+{
+    <p>No hay proyectos.</p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var project in projects)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                @project.Name
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteProject(project.Id)">Eliminar</button>
+            </li>
+        }
+    </ul>
+}

@@ -1,0 +1,74 @@
+@page "/folders/{WorkspaceId:int}"
+@using TaskManager.Data.Models
+@inject TaskManager.Data.TaskManagerDbContext Db
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter]
+    public int WorkspaceId { get; set; }
+    private Workspace workspace;
+    private List<Folder> folders;
+    private string newFolderName;
+
+    protected override void OnInitialized()
+    {
+        workspace = Db.Workspaces.FirstOrDefault(w => w.Id == WorkspaceId);
+        folders = Db.Folders.Where(f => f.WorkspaceId == WorkspaceId).ToList();
+    }
+
+    private void AddFolder()
+    {
+        if (!string.IsNullOrWhiteSpace(newFolderName))
+        {
+            var folder = new Folder { Name = newFolderName, WorkspaceId = WorkspaceId };
+            Db.Folders.Add(folder);
+            Db.SaveChanges();
+            folders.Add(folder);
+            newFolderName = string.Empty;
+        }
+    }
+
+    private void DeleteFolder(int id)
+    {
+        var folder = Db.Folders.Find(id);
+        if (folder != null)
+        {
+            Db.Folders.Remove(folder);
+            Db.SaveChanges();
+            folders.Remove(folder);
+        }
+    }
+
+    private void GoToProjects(int folderId)
+    {
+        Navigation.NavigateTo($"/projects/{folderId}");
+    }
+}
+
+<h3>Carpetas en Workspace: @workspace?.Name</h3>
+
+<div class="mb-3">
+    <input @bind="newFolderName" placeholder="Nueva Carpeta" class="form-control" />
+    <button class="btn btn-primary mt-2" @onclick="AddFolder">Agregar Carpeta</button>
+</div>
+
+@if (folders is null)
+{
+    <p>Cargando...</p>
+}
+else if (!folders.Any())
+{
+    <p>No hay carpetas.</p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var folder in folders)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span @onclick="() => GoToProjects(folder.Id)" style="cursor:pointer;">@folder.Name</span>
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteFolder(folder.Id)">Eliminar</button>
+            </li>
+        }
+    </ul>
+}
