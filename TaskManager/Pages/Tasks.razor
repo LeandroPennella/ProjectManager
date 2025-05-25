@@ -1,5 +1,6 @@
 @page "/tasks/{SectionId:int}"
 @using TaskManager.Data.Models
+@using TaskManager.Pages
 @inject TaskManager.Data.TaskManagerDbContext Db
 @inject NavigationManager Navigation
 
@@ -104,6 +105,7 @@ else
                 </div>
                 <div class="ms-4 mt-2">
                     <SubtaskList ParentTaskId="@tarea.Id" />
+                    <TagManager TaskItemId="@tarea.Id" />
                 </div>
             </li>
         }

@@ -1,0 +1,74 @@
+@using TaskManager.Data.Models
+@inject TaskManager.Data.TaskManagerDbContext Db
+
+@code {
+    [Parameter]
+    public int TaskItemId { get; set; }
+    private List<Tag> allTags = new();
+    private List<Tag> taskTags = new();
+    private string newTagName = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        allTags = Db.Tags.ToList();
+        taskTags = Db.TaskTags.Where(tt => tt.TaskItemId == TaskItemId).Select(tt => tt.Tag).ToList();
+    }
+
+    private void AddTagToTask(int tagId)
+    {
+        if (!Db.TaskTags.Any(tt => tt.TaskItemId == TaskItemId && tt.TagId == tagId))
+        {
+            Db.TaskTags.Add(new TaskTag { TaskItemId = TaskItemId, TagId = tagId });
+            Db.SaveChanges();
+            taskTags = Db.TaskTags.Where(tt => tt.TaskItemId == TaskItemId).Select(tt => tt.Tag).ToList();
+        }
+    }
+
+    private void RemoveTagFromTask(int tagId)
+    {
+        var taskTag = Db.TaskTags.FirstOrDefault(tt => tt.TaskItemId == TaskItemId && tt.TagId == tagId);
+        if (taskTag != null)
+        {
+            Db.TaskTags.Remove(taskTag);
+            Db.SaveChanges();
+            taskTags = Db.TaskTags.Where(tt => tt.TaskItemId == TaskItemId).Select(tt => tt.Tag).ToList();
+        }
+    }
+
+    private void CreateAndAddTag()
+    {
+        if (!string.IsNullOrWhiteSpace(newTagName))
+        {
+            var tag = new Tag { Name = newTagName };
+            Db.Tags.Add(tag);
+            Db.SaveChanges();
+            AddTagToTask(tag.Id);
+            allTags = Db.Tags.ToList();
+            newTagName = string.Empty;
+        }
+    }
+}
+
+<div class="mb-2">
+    <label>Etiquetas:</label>
+    <div>
+        @foreach (var tag in taskTags)
+        {
+            <span class="badge bg-success me-1">
+                @tag.Name
+                <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Quitar" @onclick="() => RemoveTagFromTask(tag.Id)"></button>
+            </span>
+        }
+    </div>
+    <div class="input-group input-group-sm mt-2">
+        <select class="form-select" @onchange="e => AddTagToTask(int.Parse(e.Value.ToString()))">
+            <option value="">Agregar etiqueta existente...</option>
+            @foreach (var tag in allTags.Where(t => !taskTags.Any(tt => tt.Id == t.Id)))
+            {
+                <option value="@tag.Id">@tag.Name</option>
+            }
+        </select>
+        <input class="form-control" @bind="newTagName" placeholder="Nueva etiqueta" />
+        <button class="btn btn-outline-primary" @onclick="CreateAndAddTag">Crear y agregar</button>
+    </div>
+</div>
