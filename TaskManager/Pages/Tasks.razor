@@ -94,12 +94,17 @@ else
     <ul class="list-group">
         @foreach (var tarea in tasks)
         {
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <b>@tarea.Title</b> <span class="badge bg-info">@tarea.Priority</span> <span class="badge bg-warning">@tarea.Urgency</span>
-                    <div>@tarea.Description</div>
+            <li class="list-group-item d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <b>@tarea.Title</b> <span class="badge bg-info">@tarea.Priority</span> <span class="badge bg-warning">@tarea.Urgency</span>
+                        <div>@tarea.Description</div>
+                    </div>
+                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteTask(tarea.Id)">Eliminar</button>
                 </div>
-                <button class="btn btn-danger btn-sm" @onclick="() => DeleteTask(tarea.Id)">Eliminar</button>
+                <div class="ms-4 mt-2">
+                    <SubtaskList ParentTaskId="@tarea.Id" />
+                </div>
             </li>
         }
     </ul>

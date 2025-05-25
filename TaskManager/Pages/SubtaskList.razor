@@ -1,0 +1,92 @@
+@using TaskManager.Data.Models
+@inject TaskManager.Data.TaskManagerDbContext Db
+
+@code {
+    [Parameter]
+    public int ParentTaskId { get; set; }
+    private List<TaskItem> subtasks = new();
+    private string newSubtaskTitle = string.Empty;
+    private string newSubtaskDescription = string.Empty;
+    private Priority newSubtaskPriority = Priority.Media;
+    private Urgency newSubtaskUrgency = Urgency.Media;
+
+    protected override void OnInitialized()
+    {
+        subtasks = Db.Tasks.Where(t => t.ParentTaskId == ParentTaskId).ToList();
+    }
+
+    private void AddSubtask()
+    {
+        if (!string.IsNullOrWhiteSpace(newSubtaskTitle))
+        {
+            var subtask = new TaskItem {
+                Title = newSubtaskTitle,
+                Description = newSubtaskDescription,
+                Priority = newSubtaskPriority,
+                Urgency = newSubtaskUrgency,
+                ParentTaskId = ParentTaskId
+            };
+            Db.Tasks.Add(subtask);
+            Db.SaveChanges();
+            subtasks.Add(subtask);
+            newSubtaskTitle = string.Empty;
+            newSubtaskDescription = string.Empty;
+            newSubtaskPriority = Priority.Media;
+            newSubtaskUrgency = Urgency.Media;
+        }
+    }
+
+    private void DeleteSubtask(int id)
+    {
+        var subtask = Db.Tasks.Find(id);
+        if (subtask != null)
+        {
+            Db.Tasks.Remove(subtask);
+            Db.SaveChanges();
+            subtasks.Remove(subtask);
+        }
+    }
+}
+
+<div class="mb-2">
+    <input @bind="newSubtaskTitle" placeholder="Título de la subtarea" class="form-control form-control-sm mb-1" />
+    <textarea @bind="newSubtaskDescription" placeholder="Descripción" class="form-control form-control-sm mb-1"></textarea>
+    <div class="row mb-1">
+        <div class="col">
+            <label>Prioridad:</label>
+            <select @bind="newSubtaskPriority" class="form-select form-select-sm">
+                <option value="@Priority.Baja">Baja</option>
+                <option value="@Priority.Media">Media</option>
+                <option value="@Priority.Alta">Alta</option>
+            </select>
+        </div>
+        <div class="col">
+            <label>Urgencia:</label>
+            <select @bind="newSubtaskUrgency" class="form-select form-select-sm">
+                <option value="@Urgency.Baja">Baja</option>
+                <option value="@Urgency.Media">Media</option>
+                <option value="@Urgency.Alta">Alta</option>
+            </select>
+        </div>
+    </div>
+    <button class="btn btn-primary btn-sm" @onclick="AddSubtask">Agregar Subtarea</button>
+</div>
+@if (!subtasks.Any())
+{
+    <span class="text-muted">Sin subtareas</span>
+}
+else
+{
+    <ul class="list-group list-group-flush">
+        @foreach (var sub in subtasks)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <b>@sub.Title</b> <span class="badge bg-info">@sub.Priority</span> <span class="badge bg-warning">@sub.Urgency</span>
+                    <div>@sub.Description</div>
+                </div>
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteSubtask(sub.Id)">Eliminar</button>
+            </li>
+        }
+    </ul>
+}
