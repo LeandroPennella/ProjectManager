@@ -1,0 +1,77 @@
+@page "/sections/{ProjectId:int}"
+@using TaskManager.Data.Models
+@inject TaskManager.Data.TaskManagerDbContext Db
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter]
+    public int ProjectId { get; set; }
+    private Project project;
+    private List<Section> sections = new();
+    private string newSectionName = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        project = Db.Projects.FirstOrDefault(p => p.Id == ProjectId);
+        if (project != null)
+        {
+            sections = Db.Sections.Where(s => s.ProjectId == ProjectId).ToList();
+        }
+    }
+
+    private void AddSection()
+    {
+        if (!string.IsNullOrWhiteSpace(newSectionName))
+        {
+            var section = new Section { Name = newSectionName, ProjectId = ProjectId };
+            Db.Sections.Add(section);
+            Db.SaveChanges();
+            sections.Add(section);
+            newSectionName = string.Empty;
+        }
+    }
+
+    private void DeleteSection(int id)
+    {
+        var section = Db.Sections.Find(id);
+        if (section != null)
+        {
+            Db.Sections.Remove(section);
+            Db.SaveChanges();
+            sections.Remove(section);
+        }
+    }
+
+    private void GoToTasks(int sectionId)
+    {
+        Navigation.NavigateTo($"/tasks/{sectionId}");
+    }
+}
+
+<h3>Secciones en Proyecto: @project?.Name</h3>
+
+<div class="mb-3">
+    <input @bind="newSectionName" placeholder="Nueva Sección" class="form-control" />
+    <button class="btn btn-primary mt-2" @onclick="AddSection">Agregar Sección</button>
+</div>
+
+@if (sections is null)
+{
+    <p>Cargando...</p>
+}
+else if (!sections.Any())
+{
+    <p>No hay secciones.</p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var sec in sections)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span @onclick="() => GoToTasks(sec.Id)" style="cursor:pointer;">@sec.Name</span>
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteSection(sec.Id)">Eliminar</button>
+            </li>
+        }
+    </ul>
+}

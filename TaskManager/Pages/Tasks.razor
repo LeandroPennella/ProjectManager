@@ -1,0 +1,106 @@
+@page "/tasks/{SectionId:int}"
+@using TaskManager.Data.Models
+@inject TaskManager.Data.TaskManagerDbContext Db
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter]
+    public int SectionId { get; set; }
+    private Section section;
+    private List<TaskItem> tasks = new();
+    private string newTaskTitle = string.Empty;
+    private string newTaskDescription = string.Empty;
+    private Priority newTaskPriority = Priority.Media;
+    private Urgency newTaskUrgency = Urgency.Media;
+
+    protected override void OnInitialized()
+    {
+        section = Db.Sections.FirstOrDefault(s => s.Id == SectionId);
+        if (section != null)
+        {
+            tasks = Db.Tasks.Where(t => t.SectionId == SectionId && t.ParentTaskId == null).ToList();
+        }
+    }
+
+    private void AddTask()
+    {
+        if (!string.IsNullOrWhiteSpace(newTaskTitle))
+        {
+            var task = new TaskItem {
+                Title = newTaskTitle,
+                Description = newTaskDescription,
+                Priority = newTaskPriority,
+                Urgency = newTaskUrgency,
+                SectionId = SectionId
+            };
+            Db.Tasks.Add(task);
+            Db.SaveChanges();
+            tasks.Add(task);
+            newTaskTitle = string.Empty;
+            newTaskDescription = string.Empty;
+            newTaskPriority = Priority.Media;
+            newTaskUrgency = Urgency.Media;
+        }
+    }
+
+    private void DeleteTask(int id)
+    {
+        var task = Db.Tasks.Find(id);
+        if (task != null)
+        {
+            Db.Tasks.Remove(task);
+            Db.SaveChanges();
+            tasks.Remove(task);
+        }
+    }
+}
+
+<h3>Tareas en Sección: @section?.Name</h3>
+
+<div class="mb-3">
+    <input @bind="newTaskTitle" placeholder="Título de la tarea" class="form-control mb-1" />
+    <textarea @bind="newTaskDescription" placeholder="Descripción" class="form-control mb-1"></textarea>
+    <div class="row mb-1">
+        <div class="col">
+            <label>Prioridad:</label>
+            <select @bind="newTaskPriority" class="form-select">
+                <option value="@Priority.Baja">Baja</option>
+                <option value="@Priority.Media">Media</option>
+                <option value="@Priority.Alta">Alta</option>
+            </select>
+        </div>
+        <div class="col">
+            <label>Urgencia:</label>
+            <select @bind="newTaskUrgency" class="form-select">
+                <option value="@Urgency.Baja">Baja</option>
+                <option value="@Urgency.Media">Media</option>
+                <option value="@Urgency.Alta">Alta</option>
+            </select>
+        </div>
+    </div>
+    <button class="btn btn-primary" @onclick="AddTask">Agregar Tarea</button>
+</div>
+
+@if (tasks is null)
+{
+    <p>Cargando...</p>
+}
+else if (!tasks.Any())
+{
+    <p>No hay tareas.</p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var task in tasks)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <b>@task.Title</b> <span class="badge bg-info">@task.Priority</span> <span class="badge bg-warning">@task.Urgency</span>
+                    <div>@task.Description</div>
+                </div>
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteTask(task.Id)">Eliminar</button>
+            </li>
+        }
+    </ul>
+}
