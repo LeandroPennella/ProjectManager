@@ -6,7 +6,7 @@
 @code {
     [Parameter]
     public int SectionId { get; set; }
-    private Section section;
+    private Section seccion;
     private List<TaskItem> tasks = new();
     private string newTaskTitle = string.Empty;
     private string newTaskDescription = string.Empty;
@@ -15,8 +15,8 @@
 
     protected override void OnInitialized()
     {
-        section = Db.Sections.FirstOrDefault(s => s.Id == SectionId);
-        if (section != null)
+        seccion = Db.Sections.FirstOrDefault(s => s.Id == SectionId);
+        if (seccion != null)
         {
             tasks = Db.Tasks.Where(t => t.SectionId == SectionId && t.ParentTaskId == null).ToList();
         }
@@ -55,7 +55,7 @@
     }
 }
 
-<h3>Tareas en Sección: @section?.Name</h3>
+<h3>Tareas en Sección: @seccion?.Name</h3>
 
 <div class="mb-3">
     <input @bind="newTaskTitle" placeholder="Título de la tarea" class="form-control mb-1" />
@@ -92,14 +92,14 @@ else if (!tasks.Any())
 else
 {
     <ul class="list-group">
-        @foreach (var task in tasks)
+        @foreach (var tarea in tasks)
         {
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <div>
-                    <b>@task.Title</b> <span class="badge bg-info">@task.Priority</span> <span class="badge bg-warning">@task.Urgency</span>
-                    <div>@task.Description</div>
+                    <b>@tarea.Title</b> <span class="badge bg-info">@tarea.Priority</span> <span class="badge bg-warning">@tarea.Urgency</span>
+                    <div>@tarea.Description</div>
                 </div>
-                <button class="btn btn-danger btn-sm" @onclick="() => DeleteTask(task.Id)">Eliminar</button>
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteTask(tarea.Id)">Eliminar</button>
             </li>
         }
     </ul>
