@@ -36,7 +36,9 @@
                             @foreach (var project in Db.Projects.Where(p => p.FolderId == folder.Id))
                             {
                                 <div class="nav-item px-2">
-                                    <span class="oi oi-briefcase me-1"></span>@project.Name
+                                    <a href="#" class="nav-link" @onclick:stopPropagation @onclick:preventDefault @onclick="() => SelectProject(project)">
+                                        <span class="oi oi-briefcase me-1"></span>@project.Name
+                                    </a>
                                 </div>
                             }
                         </div>
@@ -47,11 +49,13 @@
     </nav>
 </div>
 
+
 @code {
     // Eliminar duplicados y limpiar ambigüedades
     private bool collapseNavMenu = true;
     private Workspace? _selectedWorkspace;
     private HashSet<int> _expandedFolders = new();
+    private Project? _selectedProject;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
@@ -72,5 +76,11 @@
             _expandedFolders.Remove(folderId);
         else
             _expandedFolders.Add(folderId);
+    }
+
+    private void SelectProject(Project project)
+    {
+        _selectedProject = project;
+        StateHasChanged();
     }
 }
