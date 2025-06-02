@@ -1,4 +1,4 @@
-﻿@page "/ProjectTasks"
+﻿@page "/ProjectTasks/{projectId:int}"
 @using TaskManager.Data.Models
 @inject TaskManager.Data.TaskManagerDbContext Db
 @inject NavigationManager Navigation
@@ -29,40 +29,22 @@
         }
     </div>
 }
+else
+{
+    <div class="container mt-3">
+        <h4>No se encontró el proyecto.</h4>
+    </div>
+}
 
 
 @code {
-    // Eliminar duplicados y limpiar ambigüedades
-    private bool collapseNavMenu = true;
-    //private Workspace? _selectedWorkspace;
-    private HashSet<int> _expandedFolders = new();
+    [Parameter]
+    public int projectId { get; set; }
     private Project? _selectedProject;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
+    protected override void OnParametersSet()
     {
-        collapseNavMenu = !collapseNavMenu;
-    }
-
-    //private void SelectWorkspace(Workspace ws)
-    //{
-        //_selectedWorkspace = ws;
-        //_expandedFolders.Clear();
-    //}
-
-    private void ToggleFolder(int folderId)
-    {
-        if (_expandedFolders.Contains(folderId))
-            _expandedFolders.Remove(folderId);
-        else
-            _expandedFolders.Add(folderId);
-    }
-
-    private void SelectProject(Project project)
-    {
-        _selectedProject = project;
-        StateHasChanged();
+        _selectedProject = Db.Projects.FirstOrDefault(p => p.Id == projectId);
     }
 }
 

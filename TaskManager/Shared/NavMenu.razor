@@ -1,5 +1,6 @@
 ﻿@using TaskManager.Data.Models
 @inject TaskManager.Data.TaskManagerDbContext Db
+@inject NavigationManager Navigation
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -36,7 +37,7 @@
                             @foreach (var project in Db.Projects.Where(p => p.FolderId == folder.Id))
                             {
                                 <div class="nav-item px-2">
-                                    <a href="#" class="nav-link" @onclick:stopPropagation @onclick:preventDefault @onclick="() => SelectProject(project)">
+                                    <a href="#" class="nav-link" @onclick:stopPropagation @onclick:preventDefault @onclick="() => GoToProjectTasks(project.Id)">
                                         <span class="oi oi-briefcase me-1"></span>@project.Name
                                     </a>
                                 </div>
@@ -82,5 +83,10 @@
     {
         _selectedProject = project;
         StateHasChanged();
+    }
+
+    private void GoToProjectTasks(int projectId)
+    {
+        Navigation.NavigateTo($"/ProjectTasks/{projectId}");
     }
 }
