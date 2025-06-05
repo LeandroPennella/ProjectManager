@@ -1,6 +1,7 @@
 ﻿@using TaskManager.Data.Models
 @inject TaskManager.Data.TaskManagerDbContext Db
 @inject NavigationManager Navigation
+@inject ProjectSelectionService ProjectSelection
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
@@ -12,42 +13,44 @@
 </div>
 
 <div class="@NavMenuCssClass nav-scrollable">
-    <nav class="flex-column">
-        @if (_selectedWorkspace == null)
-        {
-            @foreach (var ws in Db.Workspaces.ToList())
+    <CascadingValue Value="_selectedProject" Name="SelectedProject">
+        <nav class="flex-column">
+            @if (_selectedWorkspace == null)
             {
-                <div class="nav-item px-3">
-                    <a class="nav-link" href="#" @onclick:stopPropagation @onclick:preventDefault @onclick="() => SelectWorkspace(ws)">@ws.Name</a>
-                </div>
+                @foreach (var ws in Db.Workspaces.ToList())
+                {
+                    <div class="nav-item px-3">
+                        <a class="nav-link" href="#" @onclick:stopPropagation @onclick:preventDefault @onclick="() => SelectWorkspace(ws)">@ws.Name</a>
+                    </div>
+                }
             }
-        }
-        else
-        {
-            @foreach (var folder in Db.Folders.Where(f => f.WorkspaceId == _selectedWorkspace.Id))
+            else
             {
-                <div class="nav-item px-3">
-                    <button class="btn btn-link w-100 text-start" @onclick="() => ToggleFolder(folder.Id)">
-                        <span class="oi oi-folder me-1"></span>@folder.Name
-                        <span class="float-end">@(_expandedFolders.Contains(folder.Id) ? "▼" : "►")</span>
-                    </button>
-                    @if (_expandedFolders.Contains(folder.Id))
-                    {
-                        <div class="ms-4">
-                            @foreach (var project in Db.Projects.Where(p => p.FolderId == folder.Id))
-                            {
-                                <div class="nav-item px-2">
-                                    <a href="#" class="nav-link" @onclick:stopPropagation @onclick:preventDefault @onclick="() => GoToProjectTasks(project.Id)">
-                                        <span class="oi oi-briefcase me-1"></span>@project.Name
-                                    </a>
-                                </div>
-                            }
-                        </div>
-                    }
-                </div>
+                @foreach (var folder in Db.Folders.Where(f => f.WorkspaceId == _selectedWorkspace.Id))
+                {
+                    <div class="nav-item px-3">
+                        <button class="btn btn-link w-100 text-start" @onclick="() => ToggleFolder(folder.Id)">
+                            <span class="oi oi-folder me-1"></span>@folder.Name
+                            <span class="float-end">@(_expandedFolders.Contains(folder.Id) ? "▼" : "►")</span>
+                        </button>
+                        @if (_expandedFolders.Contains(folder.Id))
+                        {
+                            <div class="ms-4">
+                                @foreach (var project in Db.Projects.Where(p => p.FolderId == folder.Id))
+                                {
+                                    <div class="nav-item px-2">
+                                        <a href="#" class="nav-link" @onclick:stopPropagation @onclick:preventDefault @onclick="() => GoToProjectTasks(project.Id)">
+                                            <span class="oi oi-briefcase me-1"></span>@project.Name
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
             }
-        }
-    </nav>
+        </nav>
+    </CascadingValue>
 </div>
 
 
@@ -87,6 +90,8 @@
 
     private void GoToProjectTasks(int projectId)
     {
+        var project = Db.Projects.FirstOrDefault(p => p.Id == projectId);
+        ProjectSelection.SetProject(project);
         Navigation.NavigateTo($"/ProjectTasks/{projectId}");
     }
 }

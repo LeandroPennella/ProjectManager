@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 using TaskManager.Data;
+using TaskManager.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,7 @@ builder.Services.AddServerSideBlazor();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? "Server=(localdb)\\mssqllocaldb;Database=TaskManagerDb;Trusted_Connection=True;MultipleActiveResultSets=true";
 builder.Services.AddDbContext<TaskManagerDbContext>(options =>
     options.UseSqlServer(connectionString));
+builder.Services.AddSingleton<ProjectSelectionService>();
 
 var app = builder.Build();
 

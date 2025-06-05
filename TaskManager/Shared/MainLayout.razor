@@ -1,6 +1,9 @@
-﻿@inherits LayoutComponentBase
+﻿@using TaskManager.Data.Models
+@inherits LayoutComponentBase
 
 <PageTitle>TaskManager</PageTitle>
+
+@inject ProjectSelectionService ProjectSelection
 
 <div class="page">
     <div class="sidebar">
@@ -10,8 +13,11 @@
     <main>
         <div class="top-row px-4">
             <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+            @if (ProjectSelection.SelectedProject != null)
+            {
+                <span class="ms-3 fw-bold">Proyecto: @ProjectSelection.SelectedProject.Name</span>
+            }
         </div>
-
         <article class="content px-4">
             @Body
         </article>

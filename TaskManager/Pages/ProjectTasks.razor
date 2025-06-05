@@ -3,28 +3,30 @@
 @inject TaskManager.Data.TaskManagerDbContext Db
 @inject NavigationManager Navigation
 
-
-
-
-<h3>ProjectTasks</h3>
-
 @if (_selectedProject != null)
 {
     <div class="container mt-3">
         <h4>Tareas de @_selectedProject.Name</h4>
         @foreach (var sec in Db.Sections.Where(s => s.ProjectId == _selectedProject.Id))
         {
+            var isExpanded = _expandedSections.Contains(sec.Id);
             <div class="mb-3">
-                <h5>@sec.Name</h5>
-                <ul class="list-group">
-                    @foreach (var task in Db.Tasks.Where(t => t.SectionId == sec.Id))
-                    {
-                        <li class="list-group-item">
-                            <b>@task.Title</b> <span class="badge bg-info">@task.Priority</span> <span class="badge bg-warning">@task.Urgency</span>
-                            <div>@task.Description</div>
-                        </li>
-                    }
-                </ul>
+                <button class="btn btn-link text-start w-100" @onclick="() => ToggleSection(sec.Id)">
+                    <h5 class="d-inline">@sec.Name</h5>
+                    <span class="float-end">@(isExpanded ? "▼" : "►")</span>
+                </button>
+                @if (isExpanded)
+                {
+                    <ul class="list-group">
+                        @foreach (var task in Db.Tasks.Where(t => t.SectionId == sec.Id))
+                        {
+                            <li class="list-group-item">
+                                <b>@task.Title</b> <span class="badge bg-info">@task.Priority</span> <span class="badge bg-warning">@task.Urgency</span>
+                                <div>@task.Description</div>
+                            </li>
+                        }
+                    </ul>
+                }
             </div>
         }
     </div>
@@ -36,15 +38,24 @@ else
     </div>
 }
 
-
 @code {
     [Parameter]
     public int projectId { get; set; }
     private Project? _selectedProject;
+    private HashSet<int> _expandedSections = new();
 
     protected override void OnParametersSet()
     {
         _selectedProject = Db.Projects.FirstOrDefault(p => p.Id == projectId);
+        _expandedSections.Clear();
+    }
+
+    private void ToggleSection(int sectionId)
+    {
+        if (_expandedSections.Contains(sectionId))
+            _expandedSections.Remove(sectionId);
+        else
+            _expandedSections.Add(sectionId);
     }
 }
 
