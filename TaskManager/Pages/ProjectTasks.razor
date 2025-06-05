@@ -6,7 +6,6 @@
 @if (_selectedProject != null)
 {
     <div class="container mt-3">
-        <h4>Tareas de @_selectedProject.Name</h4>
         @foreach (var sec in Db.Sections.Where(s => s.ProjectId == _selectedProject.Id))
         {
             var isExpanded = _expandedSections.Contains(sec.Id);
@@ -18,12 +17,9 @@
                 @if (isExpanded)
                 {
                     <ul class="list-group">
-                        @foreach (var task in Db.Tasks.Where(t => t.SectionId == sec.Id))
+                        @foreach (var task in Db.Tasks.Where(t => t.SectionId == sec.Id && t.ParentTaskId == null))
                         {
-                            <li class="list-group-item">
-                                <b>@task.Title</b> <span class="badge bg-info">@task.Priority</span> <span class="badge bg-warning">@task.Urgency</span>
-                                <div>@task.Description</div>
-                            </li>
+                            @RenderTask(task)
                         }
                     </ul>
                 }
@@ -43,6 +39,7 @@ else
     public int projectId { get; set; }
     private Project? _selectedProject;
     private HashSet<int> _expandedSections = new();
+    private HashSet<int> _expandedTasks = new();
 
     protected override void OnParametersSet()
     {
@@ -57,5 +54,50 @@ else
         else
             _expandedSections.Add(sectionId);
     }
+
+    private void ToggleTask(int taskId)
+    {
+        if (_expandedTasks.Contains(taskId))
+            _expandedTasks.Remove(taskId);
+        else
+            _expandedTasks.Add(taskId);
+    }
+
+    private RenderFragment RenderTask(TaskItem task) => __builder =>
+    {
+        var isExpanded = _expandedTasks.Contains(task.Id);
+        __builder.OpenElement(0, "li");
+        __builder.AddAttribute(1, "class", "list-group-item");
+        __builder.OpenElement(2, "div");
+        __builder.AddAttribute(3, "class", "d-flex align-items-center");
+        if ((task.Subtasks != null && task.Subtasks.Any()) || Db.Tasks.Any(t => t.ParentTaskId == task.Id))
+        {
+            __builder.OpenElement(4, "button");
+            __builder.AddAttribute(5, "class", "btn btn-sm btn-link p-0 me-2");
+            __builder.AddAttribute(6, "onclick", EventCallback.Factory.Create(this, () => ToggleTask(task.Id)));
+            __builder.AddContent(7, isExpanded ? "▼" : "►");
+            __builder.CloseElement();
+        }
+        __builder.AddContent(8, (MarkupString)$"<b>{task.Title}</b> <span class='badge bg-info'>{task.Priority}</span> <span class='badge bg-warning'>{task.Urgency}</span>");
+        __builder.CloseElement();
+        __builder.OpenElement(9, "div");
+        __builder.AddContent(10, task.Description);
+        __builder.CloseElement();
+        if (isExpanded)
+        {
+            var subtasks = (task.Subtasks != null && task.Subtasks.Any()) ? task.Subtasks : Db.Tasks.Where(t => t.ParentTaskId == task.Id).ToList();
+            if (subtasks.Any())
+            {
+                __builder.OpenElement(11, "ul");
+                __builder.AddAttribute(12, "class", "list-group ms-4");
+                foreach (var sub in subtasks)
+                {
+                    __builder.AddContent(13, RenderTask(sub));
+                }
+                __builder.CloseElement();
+            }
+        }
+        __builder.CloseElement();
+    };
 }
 
