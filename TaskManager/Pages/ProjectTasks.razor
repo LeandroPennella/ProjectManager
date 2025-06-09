@@ -5,6 +5,7 @@
 
 @if (_selectedProject != null)
 {
+    <ProjectAddTask />
     <div class="container mt-3">
         @foreach (var sec in Db.Sections.Where(s => s.ProjectId == _selectedProject.Id))
         {
